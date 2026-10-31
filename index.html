@@ -1,0 +1,1094 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auto ID Photo — Capture, Remove Background &amp; Crop</title>
+    <meta name="description"
+        content="Create a professional ID photo in seconds. Take a guided photo, remove the background automatically, and auto-crop to standard 4:5 ID photo dimensions.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* ── Design tokens ── */
+        :root {
+            --bg: #0d1117;
+            --surface: #161b22;
+            --surface2: #21262d;
+            --border: #30363d;
+            --accent: #58a6ff;
+            --accent-glow: rgba(88, 166, 255, .25);
+            --success: #3fb950;
+            --danger: #f85149;
+            --text: #e6edf3;
+            --muted: #8b949e;
+            --radius: 14px;
+            --transition: .3s cubic-bezier(.4, 0, .2, 1);
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 32px 16px 64px;
+        }
+
+        /* ── Header ── */
+        .app-header {
+            text-align: center;
+            margin-bottom: 36px;
+        }
+
+        .app-header h1 {
+            font-size: clamp(1.5rem, 4vw, 2.1rem);
+            font-weight: 700;
+            background: linear-gradient(135deg, #58a6ff 0%, #79c0ff 50%, #a5d6ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.5px;
+        }
+
+        .app-header p {
+            color: var(--muted);
+            margin-top: 8px;
+            font-size: .95rem;
+        }
+
+        /* ── Step progress bar ── */
+        .steps {
+            display: flex;
+            align-items: center;
+            gap: 0;
+            margin-bottom: 36px;
+            width: 100%;
+            max-width: 520px;
+        }
+
+        .step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+            position: relative;
+        }
+
+        .step-circle {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 2px solid var(--border);
+            background: var(--surface2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: .8rem;
+            font-weight: 700;
+            color: var(--muted);
+            transition: var(--transition);
+            z-index: 1;
+        }
+
+        .step.active .step-circle {
+            border-color: var(--accent);
+            background: var(--accent-glow);
+            color: var(--accent);
+            box-shadow: 0 0 14px var(--accent-glow);
+        }
+
+        .step.done .step-circle {
+            border-color: var(--success);
+            background: rgba(63, 185, 80, .2);
+            color: var(--success);
+        }
+
+        .step-label {
+            font-size: .72rem;
+            color: var(--muted);
+            margin-top: 6px;
+            text-align: center;
+            transition: color var(--transition);
+            white-space: nowrap;
+        }
+
+        .step.active .step-label {
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        .step.done .step-label {
+            color: var(--success);
+        }
+
+        .step-connector {
+            flex: 1;
+            height: 2px;
+            background: var(--border);
+            margin-bottom: 22px;
+            transition: background var(--transition);
+        }
+
+        .step-connector.done {
+            background: var(--success);
+        }
+
+        /* ── Card ── */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 28px 24px;
+            width: 100%;
+            max-width: 520px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, .4);
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .card-sub {
+            font-size: .85rem;
+            color: var(--muted);
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        /* ── Stage panels ── */
+        .stage {
+            display: none;
+        }
+
+        .stage.active {
+            display: block;
+        }
+
+        /* ── Camera ── */
+        .camera-wrapper {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 4 / 5;
+            border-radius: 10px;
+            overflow: hidden;
+            background: #000;
+            box-shadow: 0 0 0 2px var(--border);
+            margin-bottom: 18px;
+        }
+
+        #video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1);
+            display: block;
+        }
+
+        .overlay-svg {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .camera-placeholder {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            color: var(--muted);
+        }
+
+        .camera-placeholder svg {
+            opacity: .4;
+        }
+
+        /* ── Preview canvas (capture stage) ── */
+        #capturePreviewWrap {
+            display: none;
+            margin-bottom: 18px;
+        }
+
+        #capturePreviewWrap canvas {
+            width: 100%;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            transform: scaleX(-1);
+            display: block;
+        }
+
+        /* ── Buttons ── */
+        .btn-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 11px 18px;
+            border-radius: 8px;
+            font-size: .92rem;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .btn:disabled {
+            opacity: .4;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: #0d1117;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: #79c0ff;
+            box-shadow: 0 0 12px var(--accent-glow);
+        }
+
+        .btn-secondary {
+            background: var(--surface2);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: #2d333b;
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: #0d1117;
+        }
+
+        .btn-success:hover:not(:disabled) {
+            background: #56d364;
+            box-shadow: 0 0 12px rgba(63, 185, 80, .3);
+        }
+
+        .btn-snap {
+            background: linear-gradient(135deg, #2ea043, #3fb950);
+            color: #fff;
+            font-size: 1rem;
+        }
+
+        .btn-snap:hover:not(:disabled) {
+            background: linear-gradient(135deg, #3fb950, #56d364);
+        }
+
+        /* ── Progress / status ── */
+        .progress-wrap {
+            margin: 16px 0 4px;
+        }
+
+        .progress-label {
+            font-size: .82rem;
+            color: var(--muted);
+            margin-bottom: 6px;
+        }
+
+        .progress-bar {
+            height: 6px;
+            background: var(--surface2);
+            border-radius: 99px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), #79c0ff);
+            border-radius: 99px;
+            width: 0%;
+            transition: width .2s ease;
+        }
+
+        .status-msg {
+            font-size: .83rem;
+            margin-top: 8px;
+            min-height: 1.2em;
+        }
+
+        .status-msg.info {
+            color: var(--accent);
+        }
+
+        .status-msg.success {
+            color: var(--success);
+        }
+
+        .status-msg.error {
+            color: var(--danger);
+        }
+
+        /* ── BG removal stage ── */
+        .bg-preview-wrap {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 4 / 5;
+            background: repeating-conic-gradient(#2d333b 0% 25%, var(--surface2) 0% 50%) 0 0 / 16px 16px;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            margin-bottom: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #bgCanvas {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            display: none;
+        }
+
+        .bg-spinner {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 14px;
+            color: var(--muted);
+            font-size: .85rem;
+        }
+
+        .spinner-ring {
+            width: 44px;
+            height: 44px;
+            border: 3px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin .75s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* ── Advanced cog panel ── */
+        .advanced-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            color: var(--muted);
+            font-size: .82rem;
+            font-weight: 500;
+            user-select: none;
+            margin-bottom: 8px;
+            width: fit-content;
+        }
+
+        .advanced-toggle:hover {
+            color: var(--text);
+        }
+
+        .cog-icon {
+            transition: transform .4s ease;
+        }
+
+        .advanced-toggle[aria-expanded="true"] .cog-icon {
+            transform: rotate(60deg);
+        }
+
+        .advanced-panel {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 14px 16px;
+            margin-bottom: 14px;
+            display: none;
+        }
+
+        .advanced-panel.open {
+            display: block;
+        }
+
+        .field-label {
+            font-size: .78rem;
+            color: var(--muted);
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+
+        .field-select {
+            width: 100%;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 7px 10px;
+            border-radius: 6px;
+            font-size: .85rem;
+            margin-bottom: 12px;
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .radio-opt {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: .84rem;
+            cursor: pointer;
+            color: var(--muted);
+        }
+
+        .radio-opt input {
+            accent-color: var(--accent);
+        }
+
+        /* ── Final crop stage ── */
+        .final-wrap {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 4 / 5;
+            background: repeating-conic-gradient(#2d333b 0% 25%, var(--surface2) 0% 50%) 0 0 / 16px 16px;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            margin-bottom: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #finalCanvas {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: rgba(63, 185, 80, .15);
+            border: 1px solid rgba(63, 185, 80, .3);
+            color: var(--success);
+            font-size: .78rem;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 99px;
+            margin-bottom: 14px;
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 480px) {
+            .card {
+                padding: 20px 14px;
+            }
+
+            .steps {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header class="app-header">
+        <h1>Auto ID Photo</h1>
+        <p>Guided capture &middot; AI background removal &middot; Smart 4:5 crop</p>
+    </header>
+
+    <!-- Step progress -->
+    <nav class="steps" aria-label="Progress steps">
+        <div class="step active" id="stepDot1">
+            <div class="step-circle">1</div>
+            <div class="step-label">Capture</div>
+        </div>
+        <div class="step-connector" id="conn1"></div>
+        <div class="step" id="stepDot2">
+            <div class="step-circle">2</div>
+            <div class="step-label">Remove BG</div>
+        </div>
+        <div class="step-connector" id="conn2"></div>
+        <div class="step" id="stepDot3">
+            <div class="step-circle">3</div>
+            <div class="step-label">Final Photo</div>
+        </div>
+    </nav>
+
+    <!-- ══════════════ STAGE 1: CAPTURE ══════════════ -->
+    <div class="card stage active" id="stage1">
+        <div class="card-title">📸 Take your ID photo</div>
+        <div class="card-sub">Align your eyes with the blue dashed line and keep your head &amp; shoulders inside the
+            outline. Good lighting helps!</div>
+
+        <div class="camera-wrapper" id="cameraWrapper">
+            <video id="video" autoplay playsinline></video>
+
+            <!-- Alignment overlay (shown after camera starts) -->
+            <svg class="overlay-svg" id="overlaySvg" viewBox="0 0 400 500" xmlns="http://www.w3.org/2000/svg"
+                style="display:none">
+                <ellipse cx="200" cy="210" rx="78" ry="108" fill="none" stroke="#58a6ff" stroke-width="2.5"
+                    stroke-dasharray="8,4" opacity=".85" />
+                <line x1="90" y1="180" x2="310" y2="180" stroke="#58a6ff" stroke-width="1.5" stroke-dasharray="4,4"
+                    opacity=".7" />
+                <path d="M 60 470 C 80 370, 120 330, 200 330 C 280 330, 320 370, 340 470" fill="none" stroke="#58a6ff"
+                    stroke-width="2.5" stroke-dasharray="8,4" opacity=".85" />
+                <line x1="200" y1="40" x2="200" y2="460" stroke="#8b949e" stroke-width="1" stroke-dasharray="2,5"
+                    opacity=".4" />
+                <path d="M 20 20 L 20 60 M 20 20 L 60 20" stroke="#58a6ff" stroke-width="2" opacity=".5" fill="none" />
+                <path d="M 380 20 L 380 60 M 380 20 L 340 20" stroke="#58a6ff" stroke-width="2" opacity=".5"
+                    fill="none" />
+                <path d="M 20 480 L 20 440 M 20 480 L 60 480" stroke="#58a6ff" stroke-width="2" opacity=".5"
+                    fill="none" />
+                <path d="M 380 480 L 380 440 M 380 480 L 340 480" stroke="#58a6ff" stroke-width="2" opacity=".5"
+                    fill="none" />
+            </svg>
+
+            <div class="camera-placeholder" id="cameraPlaceholder">
+                <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                    <circle cx="12" cy="13" r="4" />
+                </svg>
+                <span>Camera preview will appear here</span>
+            </div>
+        </div>
+
+        <!-- Photo preview after snap -->
+        <div id="capturePreviewWrap">
+            <canvas id="captureCanvas" width="400" height="500"></canvas>
+        </div>
+
+        <div class="btn-row">
+            <button class="btn btn-secondary" id="startBtn">Start Camera</button>
+            <button class="btn btn-snap" id="snapBtn" disabled>Take Photo</button>
+        </div>
+
+        <div class="btn-row" id="photoActionRow" style="display:none; margin-top:10px;">
+            <button class="btn btn-secondary" id="retakeBtn">&#8617; Retake</button>
+            <button class="btn btn-primary" id="happyBtn">Use this photo &rarr;</button>
+        </div>
+    </div>
+
+
+    <!-- ══════════════ STAGE 2: BG REMOVAL ══════════════ -->
+    <div class="card stage" id="stage2">
+        <div class="card-title">&#9984;&#65039; Removing background&hellip;</div>
+        <div class="card-sub">The AI model runs entirely in your browser &mdash; your photo is never uploaded anywhere.
+        </div>
+
+        <div class="bg-preview-wrap">
+            <canvas id="bgCanvas"></canvas>
+            <div class="bg-spinner" id="bgSpinner">
+                <div class="spinner-ring"></div>
+                <span id="bgSpinnerLabel">Preparing&hellip;</span>
+            </div>
+        </div>
+
+        <div class="progress-wrap" id="dlProgressWrap" style="display:none">
+            <div class="progress-label" id="dlProgressLabel">Downloading model&hellip;</div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="dlProgressFill"></div>
+            </div>
+        </div>
+
+        <div class="status-msg info" id="bgStatus"></div>
+
+        <!-- Advanced settings behind cog -->
+        <div style="margin-top:18px">
+            <div class="advanced-toggle" id="advancedToggle" role="button" tabindex="0" aria-expanded="false"
+                aria-controls="advancedPanel">
+                <svg class="cog-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2">
+                    <circle cx="12" cy="12" r="3" />
+                    <path
+                        d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                </svg>
+                Advanced settings
+            </div>
+
+            <div class="advanced-panel" id="advancedPanel">
+                <div class="field-label">AI Model quality</div>
+                <select id="modelSelect" class="field-select">
+                    <option value="fast" selected>Fast (5 MB download)</option>
+                    <option value="quality">High quality (43 MB download)</option>
+                </select>
+
+                <div class="field-label">Background fill</div>
+                <div class="radio-group">
+                    <label class="radio-opt"><input type="radio" name="bgMode" value="transparent" checked>
+                        Transparent</label>
+                    <label class="radio-opt"><input type="radio" name="bgMode" value="white"> White</label>
+                    <label class="radio-opt"><input type="radio" name="bgMode" value="color"> Color:
+                        <input type="color" id="bgColorPicker" value="#04AA6D" style="margin-left:4px;cursor:pointer">
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <div class="btn-row" id="bgActionRow" style="display:none; margin-top:14px;">
+            <button class="btn btn-secondary" id="bgRetakeBtn">&#8617; Retake photo</button>
+            <button class="btn btn-primary" id="bgHappyBtn">Looks good &rarr; Crop</button>
+        </div>
+    </div>
+
+
+    <!-- ══════════════ STAGE 3: FINAL CROP ══════════════ -->
+    <div class="card stage" id="stage3">
+        <div class="card-title">&#127994; Your ID photo is ready</div>
+        <div class="card-sub">Auto-cropped to 4:5 &mdash; the international standard for ID, passport and visa photos.
+        </div>
+
+        <div class="badge">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+            </svg>
+            4:5 &middot; Background removed &middot; Ready to download
+        </div>
+
+        <div class="final-wrap">
+            <canvas id="finalCanvas"></canvas>
+        </div>
+
+        <div class="btn-row">
+            <button class="btn btn-secondary" id="startOverBtn">&#8617; Start over</button>
+            <button class="btn btn-success" id="downloadBtn">&#11015; Download PNG</button>
+        </div>
+    </div>
+
+
+    <!-- ONNX Runtime (loaded async) -->
+    <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.18.0/dist/ort.min.js"></script>
+    <script>
+        /* ═══════════════════════════════════════════════
+           STAGE NAVIGATION
+        ═══════════════════════════════════════════════ */
+        function goToStage(n) {
+            document.querySelectorAll('.stage').forEach(function (s, i) {
+                s.classList.toggle('active', i + 1 === n);
+            });
+            for (var i = 1; i <= 3; i++) {
+                var dot = document.getElementById('stepDot' + i);
+                dot.classList.remove('active', 'done');
+                if (i < n) dot.classList.add('done');
+                if (i === n) dot.classList.add('active');
+            }
+            for (var j = 1; j <= 2; j++) {
+                document.getElementById('conn' + j).classList.toggle('done', j < n);
+            }
+        }
+
+        /* ═══════════════════════════════════════════════
+           STAGE 1: CAMERA CAPTURE
+        ═══════════════════════════════════════════════ */
+        var video = document.getElementById('video');
+        var captureCanvas = document.getElementById('captureCanvas');
+        var captureCtx = captureCanvas.getContext('2d');
+        var startBtn = document.getElementById('startBtn');
+        var snapBtn = document.getElementById('snapBtn');
+        var retakeBtn = document.getElementById('retakeBtn');
+        var happyBtn = document.getElementById('happyBtn');
+        var cameraPlaceholder = document.getElementById('cameraPlaceholder');
+        var overlaySvg = document.getElementById('overlaySvg');
+        var capturePreviewWrap = document.getElementById('capturePreviewWrap');
+        var photoActionRow = document.getElementById('photoActionRow');
+
+        var mediaStream = null;
+        var capturedImageData = null; // Image element for BG removal
+
+        startBtn.addEventListener('click', function () {
+            navigator.mediaDevices.getUserMedia({
+                video: { width: { ideal: 1280 }, height: { ideal: 1600 }, facingMode: 'user' },
+                audio: false
+            }).then(function (stream) {
+                mediaStream = stream;
+                video.srcObject = stream;
+                cameraPlaceholder.style.display = 'none';
+                overlaySvg.style.display = 'block';
+                startBtn.disabled = true;
+                snapBtn.disabled = false;
+            }).catch(function (err) {
+                alert('Camera access denied or unavailable.\n\n' + err.message);
+            });
+        });
+
+        snapBtn.addEventListener('click', function () {
+            var w = captureCanvas.width, h = captureCanvas.height;
+            captureCtx.clearRect(0, 0, w, h);
+            captureCtx.save();
+            captureCtx.translate(w, 0);
+            captureCtx.scale(-1, 1);
+
+            var vw = video.videoWidth, vh = video.videoHeight;
+            var vAspect = vw / vh, tAspect = w / h;
+            var sx = 0, sy = 0, sw = vw, sh = vh;
+            if (vAspect > tAspect) { sw = vh * tAspect; sx = (vw - sw) / 2; }
+            else { sh = vw / tAspect; sy = (vh - sh) / 2; }
+
+            captureCtx.drawImage(video, sx, sy, sw, sh, 0, 0, w, h);
+            captureCtx.restore();
+
+            var img = new Image();
+            img.src = captureCanvas.toDataURL('image/png');
+            img.onload = function () { capturedImageData = img; };
+
+            capturePreviewWrap.style.display = 'block';
+            photoActionRow.style.display = 'flex';
+            snapBtn.style.display = 'none';
+            capturePreviewWrap.scrollIntoView({ behavior: 'smooth' });
+        });
+
+        retakeBtn.addEventListener('click', function () {
+            capturePreviewWrap.style.display = 'none';
+            photoActionRow.style.display = 'none';
+            snapBtn.style.display = '';
+            capturedImageData = null;
+        });
+
+        happyBtn.addEventListener('click', function () {
+            goToStage(2);
+            startBgRemoval();
+        });
+
+        /* ═══════════════════════════════════════════════
+           ADVANCED COG TOGGLE
+        ═══════════════════════════════════════════════ */
+        var advancedToggle = document.getElementById('advancedToggle');
+        var advancedPanel = document.getElementById('advancedPanel');
+        advancedToggle.addEventListener('click', function () {
+            var open = advancedPanel.classList.toggle('open');
+            advancedToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+        });
+        advancedToggle.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); advancedToggle.click(); }
+        });
+
+        /* ═══════════════════════════════════════════════
+           STAGE 2: BACKGROUND REMOVAL (ONNX U2Net)
+        ═══════════════════════════════════════════════ */
+        var MODELS = {
+            fast: { url: 'https://huggingface.co/tomjackson2023/rembg/resolve/main/u2netp.onnx', size: 4574861 },
+            quality: { url: 'https://huggingface.co/tomjackson2023/rembg/resolve/main/silueta.onnx', size: 44173029 }
+        };
+        var INPUT_SIZE = 320;
+        var sessions = {};
+
+        var bgCanvas = document.getElementById('bgCanvas');
+        var bgCtx = bgCanvas.getContext('2d');
+        var bgSpinner = document.getElementById('bgSpinner');
+        var bgSpinnerLabel = document.getElementById('bgSpinnerLabel');
+        var bgStatus = document.getElementById('bgStatus');
+        var dlProgressWrap = document.getElementById('dlProgressWrap');
+        var dlProgressFill = document.getElementById('dlProgressFill');
+        var dlProgressLabel = document.getElementById('dlProgressLabel');
+        var bgActionRow = document.getElementById('bgActionRow');
+
+        function setBgStatus(msg, type) {
+            bgStatus.textContent = msg;
+            bgStatus.className = 'status-msg ' + (type || 'info');
+        }
+
+        function setDownloadProgress(fraction, label) {
+            if (fraction === null) {
+                dlProgressWrap.style.display = 'none';
+            } else {
+                dlProgressWrap.style.display = 'block';
+                dlProgressFill.style.width = Math.round(fraction * 100) + '%';
+                if (label) dlProgressLabel.textContent = label;
+            }
+        }
+
+        function fmtSize(b) {
+            return b > 1048576 ? (b / 1048576).toFixed(2) + ' MB' : (b / 1024).toFixed(1) + ' KB';
+        }
+
+        async function fetchModel(key) {
+            var model = MODELS[key];
+            var cache = null;
+            try { cache = await caches.open('autoid-bg-models'); } catch (e) { }
+            if (cache) {
+                var hit = await cache.match(model.url);
+                if (hit) {
+                    setBgStatus('Model loaded from cache.', 'info');
+                    bgSpinnerLabel.textContent = 'Loading from cache\u2026';
+                    return await hit.arrayBuffer();
+                }
+            }
+            var resp = await fetch(model.url);
+            if (!resp.ok) throw new Error('Model download failed (HTTP ' + resp.status + ').');
+            var reader = resp.body.getReader();
+            var total = parseInt(resp.headers.get('Content-Length')) || model.size;
+            var received = 0, chunks = [];
+            while (true) {
+                var r = await reader.read();
+                if (r.done) break;
+                chunks.push(r.value);
+                received += r.value.length;
+                var pct = Math.min(1, received / total);
+                setDownloadProgress(pct, 'Downloading AI model\u2026 ' + fmtSize(received) + ' of ' + fmtSize(total));
+                bgSpinnerLabel.textContent = 'Downloading\u2026 ' + Math.round(pct * 100) + '%';
+            }
+            var buf = new Uint8Array(received), off = 0;
+            chunks.forEach(function (c) { buf.set(c, off); off += c.length; });
+            if (cache) {
+                try { await cache.put(model.url, new Response(buf.buffer.slice(0), { headers: { 'Content-Type': 'application/octet-stream' } })); } catch (e) { }
+            }
+            return buf.buffer;
+        }
+
+        async function getSession(key) {
+            if (sessions[key]) return sessions[key];
+            var buf = await fetchModel(key);
+            setDownloadProgress(null);
+            setBgStatus('Preparing AI model\u2026', 'info');
+            bgSpinnerLabel.textContent = 'Preparing model\u2026';
+            if (typeof ort !== 'undefined') {
+                ort.env.wasm.wasmPaths = 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.18.0/dist/';
+            }
+            sessions[key] = await ort.InferenceSession.create(buf, { executionProviders: ['wasm'] });
+            return sessions[key];
+        }
+
+        function preprocess(img) {
+            var c = document.createElement('canvas');
+            c.width = INPUT_SIZE; c.height = INPUT_SIZE;
+            var ctx = c.getContext('2d');
+            ctx.drawImage(img, 0, 0, INPUT_SIZE, INPUT_SIZE);
+            var d = ctx.getImageData(0, 0, INPUT_SIZE, INPUT_SIZE).data;
+            var n = INPUT_SIZE * INPUT_SIZE;
+            var f = new Float32Array(3 * n);
+            var mean = [0.485, 0.456, 0.406], std = [0.229, 0.224, 0.225];
+            var maxV = 0;
+            for (var i = 0; i < d.length; i++) { if (i % 4 !== 3 && d[i] > maxV) maxV = d[i]; }
+            if (maxV === 0) maxV = 255;
+            for (var p = 0; p < n; p++) {
+                for (var ch = 0; ch < 3; ch++) {
+                    f[ch * n + p] = (d[p * 4 + ch] / maxV - mean[ch]) / std[ch];
+                }
+            }
+            return new ort.Tensor('float32', f, [1, 3, INPUT_SIZE, INPUT_SIZE]);
+        }
+
+        async function startBgRemoval() {
+            if (!capturedImageData) { setBgStatus('No photo captured.', 'error'); return; }
+
+            bgSpinner.style.display = 'flex';
+            bgCanvas.style.display = 'none';
+            bgActionRow.style.display = 'none';
+            setBgStatus('', 'info');
+            setDownloadProgress(null);
+
+            try {
+                var modelKey = document.getElementById('modelSelect').value;
+                setBgStatus('Loading AI model\u2026', 'info');
+                bgSpinnerLabel.textContent = 'Loading model\u2026';
+
+                var session = await getSession(modelKey);
+                setDownloadProgress(null);
+                setBgStatus('Removing background\u2026', 'info');
+                bgSpinnerLabel.textContent = 'Removing background\u2026';
+                await new Promise(function (res) { setTimeout(res, 30); });
+
+                var feeds = {};
+                feeds[session.inputNames[0]] = preprocess(capturedImageData);
+                var results = await session.run(feeds);
+                var out = results[session.outputNames[0]].data;
+
+                var mn = Infinity, mx = -Infinity;
+                for (var i = 0; i < out.length; i++) { if (out[i] < mn) mn = out[i]; if (out[i] > mx) mx = out[i]; }
+                var range = mx - mn || 1;
+
+                var maskSmall = document.createElement('canvas');
+                maskSmall.width = INPUT_SIZE; maskSmall.height = INPUT_SIZE;
+                var mctx = maskSmall.getContext('2d');
+                var mimg = mctx.createImageData(INPUT_SIZE, INPUT_SIZE);
+                for (i = 0; i < INPUT_SIZE * INPUT_SIZE; i++) {
+                    var v = Math.round(((out[i] - mn) / range) * 255);
+                    mimg.data[i * 4] = mimg.data[i * 4 + 1] = mimg.data[i * 4 + 2] = v;
+                    mimg.data[i * 4 + 3] = 255;
+                }
+                mctx.putImageData(mimg, 0, 0);
+
+                var w = capturedImageData.naturalWidth, h = capturedImageData.naturalHeight;
+                var maskFull = document.createElement('canvas');
+                maskFull.width = w; maskFull.height = h;
+                var mfctx = maskFull.getContext('2d');
+                mfctx.imageSmoothingEnabled = true;
+                mfctx.imageSmoothingQuality = 'high';
+                mfctx.drawImage(maskSmall, 0, 0, w, h);
+                var maskData = mfctx.getImageData(0, 0, w, h).data;
+
+                bgCanvas.width = w; bgCanvas.height = h;
+                bgCtx.drawImage(capturedImageData, 0, 0);
+                var outImg = bgCtx.getImageData(0, 0, w, h);
+                for (i = 0; i < w * h; i++) { outImg.data[i * 4 + 3] = maskData[i * 4]; }
+                bgCtx.putImageData(outImg, 0, 0);
+
+                // Apply non-transparent fill if selected
+                var bgMode = document.querySelector('input[name="bgMode"]:checked').value;
+                if (bgMode !== 'transparent') {
+                    var composed = document.createElement('canvas');
+                    composed.width = w; composed.height = h;
+                    var cctx = composed.getContext('2d');
+                    cctx.fillStyle = bgMode === 'white' ? '#ffffff' : document.getElementById('bgColorPicker').value;
+                    cctx.fillRect(0, 0, w, h);
+                    cctx.drawImage(bgCanvas, 0, 0);
+                    bgCtx.clearRect(0, 0, w, h);
+                    bgCtx.drawImage(composed, 0, 0);
+                }
+
+                bgSpinner.style.display = 'none';
+                bgCanvas.style.display = 'block';
+                bgActionRow.style.display = 'flex';
+                setBgStatus('Background removed. Does it look right?', 'success');
+
+            } catch (err) {
+                bgSpinner.style.display = 'none';
+                setBgStatus('Background removal failed: ' + err.message, 'error');
+                bgActionRow.style.display = 'flex';
+            }
+        }
+
+        document.getElementById('bgRetakeBtn').addEventListener('click', function () {
+            goToStage(1);
+            capturePreviewWrap.style.display = 'none';
+            photoActionRow.style.display = 'none';
+            snapBtn.style.display = '';
+            capturedImageData = null;
+        });
+
+        document.getElementById('bgHappyBtn').addEventListener('click', function () {
+            goToStage(3);
+            autoCropAndFinish();
+        });
+
+        /* ═══════════════════════════════════════════════
+           STAGE 3: AUTO-CROP TO 4:5
+        ═══════════════════════════════════════════════ */
+        var finalCanvas = document.getElementById('finalCanvas');
+        var finalCtx = finalCanvas.getContext('2d');
+
+        function autoCropAndFinish() {
+            var srcW = bgCanvas.width, srcH = bgCanvas.height;
+            var srcData = bgCtx.getImageData(0, 0, srcW, srcH).data;
+
+            // Find bounding box of non-transparent pixels
+            var minX = srcW, minY = srcH, maxX = 0, maxY = 0;
+            for (var y = 0; y < srcH; y++) {
+                for (var x = 0; x < srcW; x++) {
+                    if (srcData[(y * srcW + x) * 4 + 3] > 10) {
+                        if (x < minX) minX = x;
+                        if (x > maxX) maxX = x;
+                        if (y < minY) minY = y;
+                        if (y > maxY) maxY = y;
+                    }
+                }
+            }
+
+            if (minX >= maxX || minY >= maxY) {
+                minX = 0; minY = 0; maxX = srcW - 1; maxY = srcH - 1;
+            }
+
+            // 3% padding around subject
+            var subjectW = maxX - minX, subjectH = maxY - minY;
+            var padX = Math.round(subjectW * 0.03);
+            var padY = Math.round(subjectH * 0.03);
+            minX = Math.max(0, minX - padX);
+            minY = Math.max(0, minY - padY);
+            maxX = Math.min(srcW - 1, maxX + padX);
+            maxY = Math.min(srcH - 1, maxY + padY);
+
+            var cropW = maxX - minX, cropH = maxY - minY;
+            var targetRatio = 4 / 5; // width / height
+            var cropRatio = cropW / cropH;
+
+            var finalX = minX, finalY = minY, finalW = cropW, finalH = cropH;
+
+            if (cropRatio > targetRatio) {
+                // Wider than 4:5 — expand height
+                finalH = Math.round(cropW / targetRatio);
+                var dh = finalH - cropH;
+                finalY = Math.max(0, minY - Math.round(dh / 2));
+                finalH = Math.min(srcH - finalY, finalH);
+                finalW = Math.round(finalH * targetRatio);
+                finalX = Math.max(0, minX - Math.round((finalW - cropW) / 2));
+                finalW = Math.min(srcW - finalX, finalW);
+            } else {
+                // Taller than 4:5 — expand width
+                finalW = Math.round(cropH * targetRatio);
+                var dw = finalW - cropW;
+                finalX = Math.max(0, minX - Math.round(dw / 2));
+                finalW = Math.min(srcW - finalX, finalW);
+                finalH = Math.round(finalW / targetRatio);
+                finalY = Math.max(0, minY - Math.round((finalH - cropH) / 2));
+                finalH = Math.min(srcH - finalY, finalH);
+            }
+
+            // Render at standard 800x1000 output (4:5)
+            finalCanvas.width = 800;
+            finalCanvas.height = 1000;
+            finalCtx.clearRect(0, 0, 800, 1000);
+            finalCtx.imageSmoothingEnabled = true;
+            finalCtx.imageSmoothingQuality = 'high';
+            finalCtx.drawImage(bgCanvas, finalX, finalY, finalW, finalH, 0, 0, 800, 1000);
+        }
+
+        document.getElementById('downloadBtn').addEventListener('click', function () {
+            finalCanvas.toBlob(function (blob) {
+                var a = document.createElement('a');
+                a.download = 'id_photo_4x5.png';
+                a.href = URL.createObjectURL(blob);
+                a.click();
+                setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
+            }, 'image/png');
+        });
+
+        document.getElementById('startOverBtn').addEventListener('click', function () {
+            if (mediaStream) { mediaStream.getTracks().forEach(function (t) { t.stop(); }); mediaStream = null; }
+            startBtn.disabled = false;
+            snapBtn.disabled = true;
+            snapBtn.style.display = '';
+            video.srcObject = null;
+            cameraPlaceholder.style.display = 'flex';
+            overlaySvg.style.display = 'none';
+            capturePreviewWrap.style.display = 'none';
+            photoActionRow.style.display = 'none';
+            capturedImageData = null;
+            setBgStatus('', 'info');
+            setDownloadProgress(null);
+            bgCanvas.style.display = 'none';
+            bgActionRow.style.display = 'none';
+            bgSpinner.style.display = 'none';
+            goToStage(1);
+        });
+    </script>
+
+</body>
+
+</html>
