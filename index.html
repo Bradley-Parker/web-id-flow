@@ -43,17 +43,17 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 32px 16px 64px;
+            padding: 24px 16px 48px;
         }
 
         /* ── Header ── */
         .app-header {
             text-align: center;
-            margin-bottom: 36px;
+            margin-bottom: 24px;
         }
 
         .app-header h1 {
-            font-size: clamp(1.5rem, 4vw, 2.1rem);
+            font-size: clamp(1.4rem, 4vw, 2.1rem);
             font-weight: 700;
             background: linear-gradient(135deg, #58a6ff 0%, #79c0ff 50%, #a5d6ff 100%);
             -webkit-background-clip: text;
@@ -64,8 +64,8 @@
 
         .app-header p {
             color: var(--muted);
-            margin-top: 8px;
-            font-size: .95rem;
+            margin-top: 6px;
+            font-size: .92rem;
         }
 
         /* ── Step progress bar ── */
@@ -73,7 +73,7 @@
             display: flex;
             align-items: center;
             gap: 0;
-            margin-bottom: 36px;
+            margin-bottom: 24px;
             width: 100%;
             max-width: 520px;
         }
@@ -87,8 +87,8 @@
         }
 
         .step-circle {
-            width: 36px;
-            height: 36px;
+            width: 34px;
+            height: 34px;
             border-radius: 50%;
             border: 2px solid var(--border);
             background: var(--surface2);
@@ -150,7 +150,7 @@
             background: var(--surface);
             border: 1px solid var(--border);
             border-radius: var(--radius);
-            padding: 28px 24px;
+            padding: 24px 20px;
             width: 100%;
             max-width: 520px;
             box-shadow: 0 8px 32px rgba(0, 0, 0, .4);
@@ -163,9 +163,9 @@
         }
 
         .card-sub {
-            font-size: .85rem;
+            font-size: .84rem;
             color: var(--muted);
-            margin-bottom: 20px;
+            margin-bottom: 16px;
             line-height: 1.5;
         }
 
@@ -178,7 +178,19 @@
             display: block;
         }
 
-        /* ── Camera ── */
+        /* ── Camera Top Controls ── */
+        .camera-top-controls {
+            margin-bottom: 14px;
+            width: 100%;
+        }
+
+        .camera-active-toolbar {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        /* ── Camera Viewer ── */
         .camera-wrapper {
             position: relative;
             width: 100%;
@@ -187,7 +199,7 @@
             overflow: hidden;
             background: #000;
             box-shadow: 0 0 0 2px var(--border);
-            margin-bottom: 18px;
+            margin-bottom: 16px;
         }
 
         #video {
@@ -215,23 +227,94 @@
             justify-content: center;
             gap: 12px;
             color: var(--muted);
+            text-align: center;
+            padding: 20px;
         }
 
         .camera-placeholder svg {
             opacity: .4;
         }
 
+        /* ── Self timer & Countdown ── */
+        .countdown-overlay {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(13, 17, 23, 0.65);
+            backdrop-filter: blur(4px);
+            z-index: 10;
+            color: #fff;
+            pointer-events: auto;
+        }
+
+        .countdown-number {
+            font-size: 5.5rem;
+            font-weight: 800;
+            line-height: 1;
+            color: #fff;
+            text-shadow: 0 0 25px rgba(88, 166, 255, 0.9), 0 2px 10px rgba(0, 0, 0, 0.8);
+            animation: countPulse 1s ease-in-out infinite;
+        }
+
+        @keyframes countPulse {
+            0% { transform: scale(1.3); opacity: 0; }
+            30% { transform: scale(1); opacity: 1; }
+            85% { transform: scale(0.95); opacity: 1; }
+            100% { transform: scale(0.8); opacity: 0; }
+        }
+
+        .countdown-hint {
+            margin-top: 14px;
+            font-size: .85rem;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .cancel-timer-btn {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            color: var(--text);
+            font-size: .76rem;
+            padding: 4px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .cancel-timer-btn:hover {
+            background: #2d333b;
+        }
+
+        .camera-flash {
+            position: absolute;
+            inset: 0;
+            background: #fff;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 20;
+            transition: opacity .15s ease-out;
+        }
+
+        .camera-flash.flash-active {
+            opacity: .85;
+            transition: none;
+        }
+
         /* ── Preview canvas (capture stage) ── */
         #capturePreviewWrap {
             display: none;
-            margin-bottom: 18px;
+            margin-bottom: 16px;
         }
 
         #capturePreviewWrap canvas {
             width: 100%;
             border-radius: 10px;
             border: 1px solid var(--border);
-            transform: scaleX(-1);
             display: block;
         }
 
@@ -262,6 +345,12 @@
             cursor: not-allowed;
         }
 
+        .btn-sm {
+            padding: 9px 12px;
+            font-size: .84rem;
+            flex: 0 0 auto;
+        }
+
         .btn-primary {
             background: var(--accent);
             color: #0d1117;
@@ -282,6 +371,12 @@
             background: #2d333b;
         }
 
+        .btn-timer.active {
+            background: rgba(88, 166, 255, .15);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
         .btn-success {
             background: var(--success);
             color: #0d1117;
@@ -296,6 +391,7 @@
             background: linear-gradient(135deg, #2ea043, #3fb950);
             color: #fff;
             font-size: 1rem;
+            flex: 1;
         }
 
         .btn-snap:hover:not(:disabled) {
@@ -504,14 +600,82 @@
             margin-bottom: 14px;
         }
 
-        /* ── Responsive ── */
-        @media (max-width: 480px) {
-            .card {
-                padding: 20px 14px;
+        /* ── Responsive Mobile Optimizations ── */
+        @media (max-width: 600px) {
+            body {
+                padding: 14px 10px 36px;
+            }
+
+            .app-header {
+                margin-bottom: 14px;
+            }
+
+            .app-header h1 {
+                font-size: 1.35rem;
+            }
+
+            .app-header p {
+                font-size: .8rem;
+                margin-top: 4px;
             }
 
             .steps {
+                margin-bottom: 16px;
                 max-width: 100%;
+            }
+
+            .step-circle {
+                width: 30px;
+                height: 30px;
+                font-size: .75rem;
+            }
+
+            .step-label {
+                font-size: .68rem;
+                margin-top: 4px;
+            }
+
+            .step-connector {
+                margin-bottom: 18px;
+            }
+
+            .card {
+                padding: 16px 14px;
+                border-radius: 12px;
+            }
+
+            .card-title {
+                font-size: 1.05rem;
+                margin-bottom: 4px;
+            }
+
+            .card-sub {
+                font-size: .8rem;
+                margin-bottom: 12px;
+            }
+
+            .camera-wrapper,
+            .bg-preview-wrap,
+            .final-wrap {
+                max-height: 48vh;
+                width: auto;
+                aspect-ratio: 4 / 5;
+                margin-left: auto;
+                margin-right: auto;
+                margin-bottom: 14px;
+            }
+
+            #capturePreviewWrap canvas {
+                max-height: 48vh;
+                width: auto;
+                aspect-ratio: 4 / 5;
+                margin-left: auto;
+                margin-right: auto;
+            }
+
+            .btn {
+                padding: 10px 14px;
+                font-size: .86rem;
             }
         }
     </style>
@@ -548,6 +712,43 @@
         <div class="card-sub">Align your eyes with the blue dashed line and keep your head &amp; shoulders inside the
             outline. Good lighting helps!</div>
 
+        <!-- Camera controls: placed ABOVE the viewer for immediate access on mobile -->
+        <div class="camera-top-controls" id="cameraTopControls">
+            <button class="btn btn-primary" id="startBtn" type="button" style="width:100%;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                    <circle cx="12" cy="13" r="4" />
+                </svg>
+                <span>Start Camera</span>
+            </button>
+
+            <div class="btn-row camera-active-toolbar" id="activeCameraControls" style="display:none; width:100%;">
+                <button class="btn btn-secondary btn-sm" id="swapCamBtn" type="button" title="Switch camera (front/back)">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20 16v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-4" />
+                        <polyline points="10 14 6 18 2 14" />
+                        <path d="M4 8V4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v4" />
+                        <polyline points="14 10 18 6 22 10" />
+                    </svg>
+                    <span>Flip</span>
+                </button>
+                <button class="btn btn-secondary btn-sm btn-timer active" id="timerToggleBtn" type="button" title="Toggle 3-second self timer">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="9" />
+                        <polyline points="12 7 12 12 15 15" />
+                    </svg>
+                    <span id="timerLabel">Timer: 3s</span>
+                </button>
+                <button class="btn btn-snap" id="snapBtn" type="button">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                        <circle cx="12" cy="13" r="4" />
+                    </svg>
+                    <span>Take Photo</span>
+                </button>
+            </div>
+        </div>
+
         <div class="camera-wrapper" id="cameraWrapper">
             <video id="video" autoplay playsinline></video>
 
@@ -571,28 +772,35 @@
                     fill="none" />
             </svg>
 
+            <!-- Self-timer countdown overlay -->
+            <div class="countdown-overlay" id="countdownOverlay" style="display:none;">
+                <div class="countdown-number" id="countdownNum">3</div>
+                <div class="countdown-hint">
+                    Get ready!
+                    <button class="cancel-timer-btn" id="cancelTimerBtn" type="button">Cancel</button>
+                </div>
+            </div>
+
+            <!-- Shutter flash -->
+            <div class="camera-flash" id="cameraFlash"></div>
+
             <div class="camera-placeholder" id="cameraPlaceholder">
                 <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                     <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
                     <circle cx="12" cy="13" r="4" />
                 </svg>
-                <span>Camera preview will appear here</span>
+                <span>Click &ldquo;Start Camera&rdquo; above to begin</span>
             </div>
         </div>
 
-        <!-- Photo preview after snap -->
-        <div id="capturePreviewWrap">
-            <canvas id="captureCanvas" width="400" height="500"></canvas>
-        </div>
-
-        <div class="btn-row">
-            <button class="btn btn-secondary" id="startBtn">Start Camera</button>
-            <button class="btn btn-snap" id="snapBtn" disabled>Take Photo</button>
-        </div>
-
-        <div class="btn-row" id="photoActionRow" style="display:none; margin-top:10px;">
+        <!-- Photo preview after snap (controls placed right above preview for immediate accessibility) -->
+        <div class="btn-row" id="photoActionRow" style="display:none; margin-bottom:14px;">
             <button class="btn btn-secondary" id="retakeBtn">&#8617; Retake</button>
             <button class="btn btn-primary" id="happyBtn">Use this photo &rarr;</button>
+        </div>
+
+        <div id="capturePreviewWrap">
+            <canvas id="captureCanvas" width="400" height="500"></canvas>
         </div>
     </div>
 
@@ -649,6 +857,10 @@
                         <input type="color" id="bgColorPicker" value="#04AA6D" style="margin-left:4px;cursor:pointer">
                     </label>
                 </div>
+
+                <button class="btn btn-secondary" id="reprocessBtn" type="button" style="margin-top:14px; width:100%; font-size:.85rem;">
+                    &#9889; Re-run removal with selected model
+                </button>
             </div>
         </div>
 
@@ -661,7 +873,7 @@
 
     <!-- ══════════════ STAGE 3: FINAL CROP ══════════════ -->
     <div class="card stage" id="stage3">
-        <div class="card-title">&#127994; Your ID photo is ready</div>
+        <div class="card-title">Your ID photo is ready</div>
         <div class="card-sub">Auto-cropped to 4:5 &mdash; the international standard for ID, passport and visa photos.
         </div>
 
@@ -689,7 +901,14 @@
         /* ═══════════════════════════════════════════════
            STAGE NAVIGATION
         ═══════════════════════════════════════════════ */
+        var currentStage = 1;
+
         function goToStage(n) {
+            currentStage = n;
+            if (n !== 1) {
+                // Shut down camera stream tracks whenever leaving capture stage
+                stopCameraStream();
+            }
             document.querySelectorAll('.stage').forEach(function (s, i) {
                 s.classList.toggle('active', i + 1 === n);
             });
@@ -705,45 +924,192 @@
         }
 
         /* ═══════════════════════════════════════════════
-           STAGE 1: CAMERA CAPTURE
+           STAGE 1: CAMERA CAPTURE, FLIP, TIMER & FOCUS
         ═══════════════════════════════════════════════ */
         var video = document.getElementById('video');
         var captureCanvas = document.getElementById('captureCanvas');
         var captureCtx = captureCanvas.getContext('2d');
         var startBtn = document.getElementById('startBtn');
         var snapBtn = document.getElementById('snapBtn');
+        var swapCamBtn = document.getElementById('swapCamBtn');
+        var timerToggleBtn = document.getElementById('timerToggleBtn');
+        var timerLabel = document.getElementById('timerLabel');
         var retakeBtn = document.getElementById('retakeBtn');
         var happyBtn = document.getElementById('happyBtn');
         var cameraPlaceholder = document.getElementById('cameraPlaceholder');
         var overlaySvg = document.getElementById('overlaySvg');
+        var cameraWrapper = document.getElementById('cameraWrapper');
+        var activeCameraControls = document.getElementById('activeCameraControls');
         var capturePreviewWrap = document.getElementById('capturePreviewWrap');
         var photoActionRow = document.getElementById('photoActionRow');
+        var countdownOverlay = document.getElementById('countdownOverlay');
+        var countdownNum = document.getElementById('countdownNum');
+        var cancelTimerBtn = document.getElementById('cancelTimerBtn');
+        var cameraFlash = document.getElementById('cameraFlash');
 
         var mediaStream = null;
         var capturedImageData = null; // Image element for BG removal
+        var currentFacingMode = 'user'; // 'user' (front) or 'environment' (back)
+        var timerDuration = 3; // default 3s self-timer
+        var timerCountdown = 0;
+        var timerInterval = null;
+        var isCameraSuspended = false; // tab backgrounded / inactive focus
 
-        startBtn.addEventListener('click', function () {
-            navigator.mediaDevices.getUserMedia({
-                video: { width: { ideal: 1280 }, height: { ideal: 1600 }, facingMode: 'user' },
+        // Start / Stop camera stream functions
+        async function startCameraStream(facing) {
+            if (facing) currentFacingMode = facing;
+            stopCameraStream();
+
+            var constraints = {
+                video: {
+                    facingMode: currentFacingMode,
+                    width: { ideal: 1280 },
+                    height: { ideal: 1600 }
+                },
                 audio: false
-            }).then(function (stream) {
-                mediaStream = stream;
-                video.srcObject = stream;
-                cameraPlaceholder.style.display = 'none';
-                overlaySvg.style.display = 'block';
-                startBtn.disabled = true;
-                snapBtn.disabled = false;
-            }).catch(function (err) {
-                alert('Camera access denied or unavailable.\n\n' + err.message);
-            });
+            };
+
+            try {
+                var stream = await navigator.mediaDevices.getUserMedia(constraints);
+                onCameraReady(stream);
+            } catch (err) {
+                // Fallback for devices that reject specific facingMode constraints
+                try {
+                    var fallbackStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+                    onCameraReady(fallbackStream);
+                } catch (fallbackErr) {
+                    alert('Camera access denied or unavailable.\n\n' + (fallbackErr.message || err.message));
+                    startBtn.style.display = 'flex';
+                    activeCameraControls.style.display = 'none';
+                }
+            }
+        }
+
+        function onCameraReady(stream) {
+            mediaStream = stream;
+            video.srcObject = stream;
+            // Mirror selfie/front camera; keep rear/environment camera natural
+            video.style.transform = (currentFacingMode === 'user') ? 'scaleX(-1)' : 'none';
+            cameraPlaceholder.style.display = 'none';
+            overlaySvg.style.display = 'block';
+            startBtn.style.display = 'none';
+            activeCameraControls.style.display = 'flex';
+            snapBtn.disabled = false;
+        }
+
+        function stopCameraStream() {
+            if (mediaStream) {
+                mediaStream.getTracks().forEach(function (t) { t.stop(); });
+                mediaStream = null;
+            }
+            if (video) {
+                video.srcObject = null;
+            }
+        }
+
+        // Release camera when tab is deselected / minimized / device locked
+        document.addEventListener('visibilitychange', function () {
+            if (document.visibilityState === 'hidden') {
+                if (mediaStream) {
+                    isCameraSuspended = true;
+                    stopCameraStream();
+                }
+                cancelTimer();
+            } else if (document.visibilityState === 'visible') {
+                if (isCameraSuspended && currentStage === 1 && !capturedImageData) {
+                    isCameraSuspended = false;
+                    startCameraStream();
+                }
+            }
         });
 
+        window.addEventListener('pagehide', function () {
+            stopCameraStream();
+        });
+        window.addEventListener('beforeunload', function () {
+            stopCameraStream();
+        });
+
+        // Start camera button handler
+        startBtn.addEventListener('click', function () {
+            startCameraStream('user');
+        });
+
+        // Camera swap button handler
+        swapCamBtn.addEventListener('click', function () {
+            cancelTimer();
+            currentFacingMode = (currentFacingMode === 'user') ? 'environment' : 'user';
+            startCameraStream(currentFacingMode);
+        });
+
+        // 3-second self-timer toggle
+        timerToggleBtn.addEventListener('click', function () {
+            if (timerDuration === 3) {
+                timerDuration = 0;
+                timerToggleBtn.classList.remove('active');
+                timerLabel.textContent = 'Timer: Off';
+            } else {
+                timerDuration = 3;
+                timerToggleBtn.classList.add('active');
+                timerLabel.textContent = 'Timer: 3s';
+            }
+        });
+
+        function triggerFlash() {
+            cameraFlash.classList.add('flash-active');
+            setTimeout(function () {
+                cameraFlash.classList.remove('flash-active');
+            }, 140);
+        }
+
+        function cancelTimer() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+            countdownOverlay.style.display = 'none';
+            snapBtn.disabled = false;
+        }
+
+        cancelTimerBtn.addEventListener('click', cancelTimer);
+
+        // Snap button handler with timer countdown support
         snapBtn.addEventListener('click', function () {
+            if (timerDuration > 0) {
+                timerCountdown = timerDuration;
+                countdownNum.textContent = timerCountdown;
+                countdownOverlay.style.display = 'flex';
+                snapBtn.disabled = true;
+
+                timerInterval = setInterval(function () {
+                    timerCountdown--;
+                    if (timerCountdown > 0) {
+                        countdownNum.textContent = timerCountdown;
+                        countdownNum.style.animation = 'none';
+                        countdownNum.offsetHeight; // trigger reflow
+                        countdownNum.style.animation = null;
+                    } else {
+                        cancelTimer();
+                        performCapture();
+                    }
+                }, 1000);
+            } else {
+                performCapture();
+            }
+        });
+
+        function performCapture() {
+            triggerFlash();
+
             var w = captureCanvas.width, h = captureCanvas.height;
             captureCtx.clearRect(0, 0, w, h);
             captureCtx.save();
-            captureCtx.translate(w, 0);
-            captureCtx.scale(-1, 1);
+
+            // Mirror snapshot if front/user camera was used so it matches the mirror view
+            if (currentFacingMode === 'user') {
+                captureCtx.translate(w, 0);
+                captureCtx.scale(-1, 1);
+            }
 
             var vw = video.videoWidth, vh = video.videoHeight;
             var vAspect = vw / vh, tAspect = w / h;
@@ -758,20 +1124,26 @@
             img.src = captureCanvas.toDataURL('image/png');
             img.onload = function () { capturedImageData = img; };
 
+            cameraWrapper.style.display = 'none';
+            activeCameraControls.style.display = 'none';
             capturePreviewWrap.style.display = 'block';
             photoActionRow.style.display = 'flex';
-            snapBtn.style.display = 'none';
-            capturePreviewWrap.scrollIntoView({ behavior: 'smooth' });
-        });
+
+            // Shut down camera stream immediately after photo is captured
+            stopCameraStream();
+        }
 
         retakeBtn.addEventListener('click', function () {
             capturePreviewWrap.style.display = 'none';
             photoActionRow.style.display = 'none';
-            snapBtn.style.display = '';
+            cameraWrapper.style.display = 'block';
+            activeCameraControls.style.display = 'flex';
             capturedImageData = null;
+            startCameraStream();
         });
 
         happyBtn.addEventListener('click', function () {
+            stopCameraStream();
             goToStage(2);
             startBgRemoval();
         });
@@ -808,6 +1180,7 @@
         var dlProgressFill = document.getElementById('dlProgressFill');
         var dlProgressLabel = document.getElementById('dlProgressLabel');
         var bgActionRow = document.getElementById('bgActionRow');
+        var rawMaskedCanvas = null; // Holds the subject with transparent alpha
 
         function setBgStatus(msg, type) {
             bgStatus.textContent = msg;
@@ -895,6 +1268,44 @@
             return new ort.Tensor('float32', f, [1, 3, INPUT_SIZE, INPUT_SIZE]);
         }
 
+        // Re-compose background fill immediately whenever options change
+        function renderBgComposition() {
+            if (!rawMaskedCanvas) return;
+            var w = rawMaskedCanvas.width, h = rawMaskedCanvas.height;
+            bgCanvas.width = w;
+            bgCanvas.height = h;
+            bgCtx.clearRect(0, 0, w, h);
+
+            var bgMode = document.querySelector('input[name="bgMode"]:checked').value;
+            if (bgMode === 'white') {
+                bgCtx.fillStyle = '#ffffff';
+                bgCtx.fillRect(0, 0, w, h);
+            } else if (bgMode === 'color') {
+                bgCtx.fillStyle = document.getElementById('bgColorPicker').value;
+                bgCtx.fillRect(0, 0, w, h);
+            }
+            bgCtx.drawImage(rawMaskedCanvas, 0, 0);
+        }
+
+        // Live triggers for advanced options
+        document.querySelectorAll('input[name="bgMode"]').forEach(function (radio) {
+            radio.addEventListener('change', function () {
+                renderBgComposition();
+                setBgStatus('Background fill updated.', 'success');
+            });
+        });
+
+        document.getElementById('bgColorPicker').addEventListener('input', function () {
+            var colorRadio = document.querySelector('input[name="bgMode"][value="color"]');
+            if (colorRadio) colorRadio.checked = true;
+            renderBgComposition();
+            setBgStatus('Custom background color applied.', 'success');
+        });
+
+        document.getElementById('reprocessBtn').addEventListener('click', function () {
+            startBgRemoval();
+        });
+
         async function startBgRemoval() {
             if (!capturedImageData) { setBgStatus('No photo captured.', 'error'); return; }
 
@@ -906,7 +1317,7 @@
 
             try {
                 var modelKey = document.getElementById('modelSelect').value;
-                setBgStatus('Loading AI model\u2026', 'info');
+                setBgStatus('Loading AI model (' + (modelKey === 'quality' ? 'High quality' : 'Fast') + ')\u2026', 'info');
                 bgSpinnerLabel.textContent = 'Loading model\u2026';
 
                 var session = await getSession(modelKey);
@@ -944,24 +1355,20 @@
                 mfctx.drawImage(maskSmall, 0, 0, w, h);
                 var maskData = mfctx.getImageData(0, 0, w, h).data;
 
-                bgCanvas.width = w; bgCanvas.height = h;
-                bgCtx.drawImage(capturedImageData, 0, 0);
-                var outImg = bgCtx.getImageData(0, 0, w, h);
-                for (i = 0; i < w * h; i++) { outImg.data[i * 4 + 3] = maskData[i * 4]; }
-                bgCtx.putImageData(outImg, 0, 0);
-
-                // Apply non-transparent fill if selected
-                var bgMode = document.querySelector('input[name="bgMode"]:checked').value;
-                if (bgMode !== 'transparent') {
-                    var composed = document.createElement('canvas');
-                    composed.width = w; composed.height = h;
-                    var cctx = composed.getContext('2d');
-                    cctx.fillStyle = bgMode === 'white' ? '#ffffff' : document.getElementById('bgColorPicker').value;
-                    cctx.fillRect(0, 0, w, h);
-                    cctx.drawImage(bgCanvas, 0, 0);
-                    bgCtx.clearRect(0, 0, w, h);
-                    bgCtx.drawImage(composed, 0, 0);
+                // Create transparent alpha subject canvas
+                rawMaskedCanvas = document.createElement('canvas');
+                rawMaskedCanvas.width = w;
+                rawMaskedCanvas.height = h;
+                var rawCtx = rawMaskedCanvas.getContext('2d');
+                rawCtx.drawImage(capturedImageData, 0, 0);
+                var outImg = rawCtx.getImageData(0, 0, w, h);
+                for (i = 0; i < w * h; i++) {
+                    outImg.data[i * 4 + 3] = maskData[i * 4];
                 }
+                rawCtx.putImageData(outImg, 0, 0);
+
+                // Render with chosen background fill
+                renderBgComposition();
 
                 bgSpinner.style.display = 'none';
                 bgCanvas.style.display = 'block';
@@ -979,8 +1386,10 @@
             goToStage(1);
             capturePreviewWrap.style.display = 'none';
             photoActionRow.style.display = 'none';
-            snapBtn.style.display = '';
+            cameraWrapper.style.display = 'block';
+            activeCameraControls.style.display = 'flex';
             capturedImageData = null;
+            startCameraStream();
         });
 
         document.getElementById('bgHappyBtn').addEventListener('click', function () {
@@ -996,13 +1405,16 @@
 
         function autoCropAndFinish() {
             var srcW = bgCanvas.width, srcH = bgCanvas.height;
-            var srcData = bgCtx.getImageData(0, 0, srcW, srcH).data;
 
-            // Find bounding box of non-transparent pixels
+            // Find subject bounding box using raw masked transparent canvas
+            var refCanvas = rawMaskedCanvas || bgCanvas;
+            var refCtx = refCanvas.getContext('2d');
+            var refData = refCtx.getImageData(0, 0, srcW, srcH).data;
+
             var minX = srcW, minY = srcH, maxX = 0, maxY = 0;
             for (var y = 0; y < srcH; y++) {
                 for (var x = 0; x < srcW; x++) {
-                    if (srcData[(y * srcW + x) * 4 + 3] > 10) {
+                    if (refData[(y * srcW + x) * 4 + 3] > 15) {
                         if (x < minX) minX = x;
                         if (x > maxX) maxX = x;
                         if (y < minY) minY = y;
@@ -1070,16 +1482,16 @@
         });
 
         document.getElementById('startOverBtn').addEventListener('click', function () {
-            if (mediaStream) { mediaStream.getTracks().forEach(function (t) { t.stop(); }); mediaStream = null; }
-            startBtn.disabled = false;
-            snapBtn.disabled = true;
-            snapBtn.style.display = '';
-            video.srcObject = null;
+            stopCameraStream();
+            startBtn.style.display = 'flex';
+            activeCameraControls.style.display = 'none';
             cameraPlaceholder.style.display = 'flex';
             overlaySvg.style.display = 'none';
+            cameraWrapper.style.display = 'block';
             capturePreviewWrap.style.display = 'none';
             photoActionRow.style.display = 'none';
             capturedImageData = null;
+            rawMaskedCanvas = null;
             setBgStatus('', 'info');
             setDownloadProgress(null);
             bgCanvas.style.display = 'none';
